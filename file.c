@@ -1,11 +1,13 @@
 #include "file.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 
 #include <curl/curl.h>
 
@@ -41,6 +43,22 @@ void download_gtfs(const char* url, const char* path){
 
 int unzip_gtfs(const char* zip, const char* path){
 	printf("Unpacking %s to %s...\n", zip, path);
-	int iResult = execlp("unzip", "unzip", "-o", zip, "-d", path, NULL);
+	pid_t pid = fork();
+	int iResult = 0;
+	int exit_status = 0;
+
+	if(pid == 0){
+		// iResult = execlp("unzip", "unzip", "-o", zip, "-d", path, NULL);
+		const char* 
+		iResult = execve("unzip", , NULL);
+	} else if(pid == -1){
+		printf("I can't fork.\n");
+		iResult = -1;
+		return iResult;
+	}
+	waitpid(pid, &exit_status, 0);
+
+	fflush(stdout);
+
 	return iResult;
 }
