@@ -48,9 +48,10 @@ int unzip_gtfs(const char* zip, const char* path){
 	switch(pid){
 		case 0:
 			execlp("unzip", "unzip", "-o", zip, "-d", path, NULL);
+			perror("unzip");
 			return -1; // if execlp returns, it's broken
 		case -1:
-			printf("Can't fork.\n");
+			perror("Can't fork");
 			return -1;
 		default: {
 			int status = 0;
