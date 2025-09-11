@@ -43,6 +43,8 @@ size_t getlines(const char* path, lines_t* lines){
 	char* szLine = (char*)calloc(cLine, sizeof(char));
 	char* pchLine = szLine;
 	size_t cbBuffer = 0;
+
+	int bOopsie = 0; // catch extraneous allocation
 	for(;;){
 		iChar = fgetc(fFile);
 		if(iChar == EOF) break;
@@ -65,13 +67,16 @@ size_t getlines(const char* path, lines_t* lines){
 			szLine = (char*)calloc(cLine, sizeof(char*));
 			pchLine = szLine;
 			cbBuffer = 0;
+			bOopsie = 1;
 		} else {
+			bOopsie = 0;
 			pchLine++;
 			cbBuffer++;
 		}
 	}
 	lines->lines = realloc(lines->lines, lines->cLine*sizeof(char*));
 	fclose(fFile);
+	if(bOopsie) free(szLine);
 
 	return lines->cLine;
 }
@@ -135,7 +140,6 @@ int do_csv(const char* path){
 	lines_t lines = {0};
 	csv_t csv = {0};
 	getlines(path, &lines);
-
 	linestocsv(&lines, &csv);
 
 	for(size_t i=0; i<csv.cRow; i++){
@@ -147,6 +151,7 @@ int do_csv(const char* path){
 	}
 
 	freelines(&lines);
+	freecsv(&csv);
 	return 0;
 }
 
