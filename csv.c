@@ -14,21 +14,6 @@ if(cursor >= (start + size)){ \
 	cursor = start + diff; \
 } \
 
-typedef struct {
-	char** lines;
-	size_t cLine;
-} lines_t;
-
-typedef struct {
-	char** columns;
-	size_t cColumn;
-} row_t;
-
-typedef struct {
-	row_t* rows;
-	size_t cRow;
-} csv_t;
-
 size_t getlines(const char* path, lines_t* lines){
 	FILE* fFile = fopen(path, "rb");
 	int iChar = 0;
@@ -133,31 +118,28 @@ size_t linestocsv(lines_t* lines, csv_t* csv){
 	return csv->cRow;
 }
 
-void freecsv(csv_t* csv){
+void free_csv(csv_t* csv){
 	for(size_t i=0; i<csv->cRow; i++){
 		free(csv->rows[i].columns);
 		csv->rows[i].columns = NULL;
 	}
 	free(csv->rows);
 	csv->rows = NULL;
+	freelines(&csv->data);
 }
 
-int do_csv(const char* path){
-	lines_t lines = {0};
-	csv_t csv = {0};
-	getlines(path, &lines);
-	linestocsv(&lines, &csv);
+int read_csv(csv_t* dest, const char* path){
+	getlines(path, &dest->data);
+	linestocsv(&dest->data, dest);
 
-	for(size_t i=0; i<csv.cRow; i++){
-		row_t row = csv.rows[i];
+	for(size_t i=0; i<dest->cRow; i++){
+		row_t row = dest->rows[i];
 		for(size_t j=0; j < row.cColumn; j++){
 			printf("(%s), ", row.columns[j]);
 		}
 		printf("\n");
 	}
 
-	freelines(&lines);
-	freecsv(&csv);
+	free_csv(dest);
 	return 0;
 }
-

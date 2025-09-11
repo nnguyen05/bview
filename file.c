@@ -12,9 +12,13 @@
 
 #include <curl/curl.h>
 
-int file_exists(const char* path){
+int file_exists(const char* root, const char* path){
+	size_t cbPath = snprintf(NULL, 0, "%s/%s", root, path) + 1;
+	char szPath[cbPath];
+	snprintf(szPath, cbPath, "%s/%s", root, path);
+
 	struct stat st = {0};
-	stat(path, &st);
+	stat(szPath, &st);
 	return !(errno == ENOENT);
 }
 
@@ -24,7 +28,13 @@ size_t write_gtfs(void* buffer, size_t size, size_t nmemb, void* userp){
 	printf(".");
 	return size * nmemb;
 }
-void download_gtfs(const char* url, const char* path){
+
+// dest, source
+void download_gtfs(const char* path, const char* url, const char* root){
+	size_t cbPath = snprintf(NULL, 0, "%s/%s", root, path) + 1;
+	char szPath[cbPath];
+	snprintf(szPath, cbPath, "%s/%s", root, path);
+
 	printf("Downloading");
 
 	CURL* cCurl = curl_easy_init();
@@ -42,12 +52,18 @@ void download_gtfs(const char* url, const char* path){
 		printf("\n...error (CURLcode %d.)\n", ccRes);
 }
 
-int unzip_gtfs(const char* zip, const char* path){
-	printf("Unpacking %s to %s...\n", zip, path);
+int unzip_gtfs(const char* path, const char* zip, const char* root){
+	size_t cbPath = snprintf(NULL, 0, "%s/%s", root, path) + 1;
+	size_t cbZip = snprintf(NULL, 0, "%s/%s", root, zip) + 1;
+	char szPath[cbPath];
+	char szZip[cbZip];
+	snprintf(szPath, cbPath, "%s/%s", root, path);
+	snprintf(szZip, cbZip, "%s/%s", root, zip);
+	printf("Unpacking %s to %s...\n", szZip, szPath);
 	pid_t pid = fork();
 	switch(pid){
 		case 0:
-			execlp("unzip", "unzip", "-o", zip, "-d", path, NULL);
+			execlp("unzip", "unzip", "-o", szZip, "-d", szPath, NULL);
 			perror("unzip");
 			return -1; // if execlp returns, it's broken
 		case -1:
