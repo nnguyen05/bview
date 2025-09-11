@@ -5,17 +5,23 @@
 
 #define BUFFER_SIZE 256
 
-int do_csv(const char* path){
+typedef struct {
+	char** lines;
+	size_t count;
+} lines_t;
+
+size_t getlines(const char* path, lines_t* lines){
 	FILE* fFile = fopen(path, "rb");
 	int iChar = 0;
 	if(fFile == NULL) return -1;
 	
-	size_t cbLines = BUFFER_SIZE;
-	char** pLines = (char**)malloc(cbLines);
-	char** ppLines = pLines;
+	size_t cLines = BUFFER_SIZE;
+	lines->count = 0;
+	lines->lines = (char**)calloc(cLines, sizeof(char*));
+	char** ppLines = lines->lines;
 	
-	size_t cbLine = BUFFER_SIZE;
-	char* szLine = (char*)malloc(cbLine);
+	size_t cLine = BUFFER_SIZE;
+	char* szLine = (char*)calloc(cLine, sizeof(char));
 	char* pchLine = szLine;
 	size_t cbBuffer = 0;
 	for(;;){
@@ -24,29 +30,29 @@ int do_csv(const char* path){
 		// ignore marks of the beast
 		if(iChar == '\r') continue;
 
-		if(pchLine >= (szLine + cbLine)){
+		if(pchLine >= (szLine + cLine)){
 			ptrdiff_t bLine = pchLine - szLine;
-			cbLine += BUFFER_SIZE;
-			szLine = realloc(szLine, cbLine);
+			cLine += BUFFER_SIZE;
+			szLine = realloc(szLine, cLine*sizeof(char));
 			pchLine = szLine + bLine;
 		}
-
 		*pchLine = iChar;
+
 		if(iChar == '\n'){
 			szLine = realloc(szLine, cbBuffer + 1);
 			szLine[cbBuffer] = 0;
 			
-			if(ppLines >= (pLines + cbLines)){
-				ptrdiff_t bLines = ppLines - pLines;
-				cbLines += BUFFER_SIZE;
-				pLines = realloc(pLines, cbLines);
-				ppLines = pLines + bLines;
+			if(ppLines >= (lines->lines + cLines)){
+				ptrdiff_t bLines = ppLines - lines->lines;
+				cLines += BUFFER_SIZE;
+				lines->lines = realloc(lines->lines, cLines*sizeof(char*));
+				ppLines = lines->lines + bLines;
 			}
 			*(ppLines++) = szLine;
+			lines->count++;
 
-			// free(szLine);
-			cbLine = BUFFER_SIZE;
-			szLine = (char*)malloc(cbLine);
+			cLine = BUFFER_SIZE;
+			szLine = (char*)calloc(cLine, sizeof(char*));
 			pchLine = szLine;
 			cbBuffer = 0;
 		} else {
@@ -54,6 +60,29 @@ int do_csv(const char* path){
 			cbBuffer++;
 		}
 	}
+	lines->lines = realloc(lines->lines, lines->count*sizeof(char*));
 
+	return lines->count;
+}
+
+void freelines(lines_t* lines){
+	for(int i = 0; i < (int)lines->count; i++){
+		free(lines->lines[i]);
+		lines->lines[i] = NULL;
+	}
+	free(lines->lines);
+	lines->lines = NULL;
+}
+
+int do_csv(const char* path){
+	lines_t lines = {0};
+	getlines(path, &lines);
+	
+	for(int i = 0; i < (int)lines.count; i++){
+		printf("%s\n", lines.lines[i]);
+	}
+
+	freelines(&lines);
 	return 0;
 }
+
