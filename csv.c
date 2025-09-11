@@ -104,10 +104,13 @@ size_t linestocsv(lines_t* lines, csv_t* csv){
 		pRow->columns = (char**)calloc(cBufColumn, sizeof(char*));
 
 		char** pColumn = pRow->columns;
-
+		
+		int quoted = 0;
 		for(int i=0; i<(int)length; i++){
 			switch(line[i]){
 				case ',':
+					if(quoted) continue;
+					// fall through
 				case '\0': {
 					line[i] = '\0';
 					RESIZE(pColumn, pRow->columns, cBufColumn, char*);
@@ -118,6 +121,9 @@ size_t linestocsv(lines_t* lines, csv_t* csv){
 					start = line + i + 1;
 					break;
 				}
+				case '\"':
+					quoted = !quoted;
+					break;
 			}
 		}
 		pRow->columns = realloc(pRow->columns, pRow->cColumn*sizeof(char*));
