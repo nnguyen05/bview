@@ -106,9 +106,16 @@ size_t linestocsv(lines_t* lines, csv_t* csv){
 					start = line + i + 1;
 					break;
 				}
-				case '\"':
+				case '\"': {
+					// TODO?: this does not account for multiple quotes
+					if(!quoted && start == line + i){
+						start++;
+					} else if (quoted) {
+						*(line + i) = 0;
+					}
 					quoted = !quoted;
 					break;
+				}
 			}
 		}
 		pRow->columns = realloc(pRow->columns, pRow->cColumn*sizeof(char*));
@@ -140,6 +147,6 @@ int read_csv(csv_t* dest, const char* path){
 		printf("\n");
 	}
 
-	free_csv(dest);
+	//free_csv(dest);
 	return 0;
 }

@@ -7,6 +7,7 @@
 #include "main.h"
 #include "file.h"
 #include "csv.h"
+#include "data.h"
 
 int main(int argc, char** argv){
 	const char* szRoot = dirname(argv[0]);
@@ -34,6 +35,10 @@ int main(int argc, char** argv){
 
 	csv_t csvStops = {0};
 	read_csv(&csvStops, szPath);
+
+	get_stops(csvStops);
+
+	free_csv(&csvStops);
 }
 cleanup:
 	// cleanup curl
